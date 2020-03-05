@@ -2,23 +2,59 @@
 
 ## セットアップ
 
-この演習ではRubyとRuby on Rails、PostgreSQLがインストールされている必要があります。
+当日までに以下のライブラリやツールをインストールしておいてください。
 
-以下のコマンドを実行しインストールされていることを確認してください。
+### Ruby
+
+事前に2.6系のRubyをインストールして下さい。rbenvの使用をおすすめします。
+
+- [rbenv/rbenv: Groom your app’s Ruby environment](https://github.com/rbenv/rbenv)
 
 ```sh
 $ ruby -v
 ruby 2.6.5p114
-$ rails -v
-Rails 6.0.2.1
-$ psql --version
-psql (PostgreSQL) 12.1
 ```
 
-## 目次
+### Ruby on Rails
 
-- [HTTP](./docs/http.md)
-- [リレーショナルデータベース](./docs/rdb.md)
-- [Rails入門 01](./docs/rails-01.md)
-- [Rails入門 02](./docs/rails-02.md)
-- [Rails入門 03](./docs/rails-03.md)
+事前にRailsの6系をインストールしてください。Rubyのインストールが済んでいる場合は`gem`コマンドでインストール可能です。
+
+```sh
+$ gem install rails
+$ rails --version
+Rails 6.0.2.1
+```
+
+### PostgreSQL
+
+事前にPostgreSQLの12系をインストールしてください。インストール後、`psql`コマンドでコンソールにログインできるところまで確認をしておいてください。
+
+以下はMacでの例です。適宜使用している環境に合わせて読みかえてください。
+
+```sh
+$ brew install postgresql
+$ brew services start postgresql
+$ psql --version
+psql (PostgreSQL) 12.2
+$ psql -U <user-name> -d postgres
+```
+
+### pg gem
+
+RubyからPostgreSQLに接続するためのライブラリです。`gem`コマンドからインストールしておいてください。
+
+```sh
+$ gem install pg
+```
+
+### cURL
+
+データ通信を行なうためのコマンドラインツールです。演習で使用するのでインスールしておいてください。
+
+以下はMacでの例です。
+
+```sh
+$ brew install curl
+$ curl example.com
+(HTML文字列が流れてくる)
+```
