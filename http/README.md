@@ -1,150 +1,168 @@
-# HTTP
-
-Webアプリケーションはクライアントから入力を受けとり、それに応じて出力を行なうプログラムです。 一般的には入力としてHTTP Requestを受けとり、出力にはHTTP Responseを返します。
-
-WebアプリケーションはHTTP Requestに応じて何らかの処理を行ないます。代表的なものはリレーショナルデータベース(以下 RDB)への書き込みなどがあります。 外部のサービスやプログラムとやりとりを行うケースは他にもありますが、一番シンプルな構成としては以下の様になるでしょう。
-
-![](./images/client-webapp-rdb.png)
-
-Webアプリケーションとの通信に使われるHTTPはプロトコルの一種です。HTTPには様々な要素がありますが、重要かつ基本的な要素は以下の4つです。
-
-- メソッド+パス
-- ヘッダー
-- ボディ
-- ステータスコード
+# HTTP 演習
 
 ## HTTPリクエスト・レスポンスの中身を知る
 
-WEBrickは簡易的なHTTPサーバーを提供することができるRubyの標準ライブラリです。cURLはさまざまなプロトコルを用いてデータ通信を行なうことができるコマンドラインツールです。
+実際に送受信されているHTTPリクエスト・レスポンスの内容を見てみましょう。
 
-この2つを使って実際のHTTPの中身を覗いてみましょう。
+### サーバの起動
 
-```ruby
-# docs/samples/server.rb
-require "webrick"
-
-server = WEBrick::HTTPServer.new(Port: 8000, AccessLog: [])
-server.mount_proc('/') do |request, response|
-  response.status = 200
-  response.content_type = "text/html"
-  response.body = "<html><body>success</body></html>"
-end
-
-Signal.trap('INT') { server.shutdown }
-server.start
-```
-
-以下が実行例です。
+まずはリクエストを送るためのサーバを起動しましょう。サーバ用のプログラムは`./http/examples/01`にあります。
 
 ```
-$ ruby server.rb
+$ cd ./http/examples/01
+$ bundle install
+$ bundle exec rackup config.up
+[2020-03-08 19:48:41] INFO  WEBrick 1.4.2
+[2020-03-08 19:48:41] INFO  ruby 2.6.5 (2019-10-01) [x86_64-darwin18]
+[2020-03-08 19:48:41] INFO  WEBrick::HTTPServer#start: pid=42864 port=9292
 ```
 
-別のターミナルからcURLでリクエストを送信します。この時に`-v`オプションを指定してください。
+### GET リクエストの送信
+
+次に`curl`コマンドを使ってリクエストを送ってみましょう。この時に`-v`オプションを使用するとリクエストとレスポンスの詳細を確認することができます。
 
 ```
-$ curl http://localhost:8000/ -v
+$ curl -v http://localhost:9292
 *   Trying ::1...
 * TCP_NODELAY set
-* Connected to localhost (::1) port 8000 (#0)
+* Connected to localhost (::1) port 9292 (#0)
 > GET / HTTP/1.1
-> Host: localhost:8000
-> User-Agent: curl/7.54.0
+> Host: localhost:9292
+> User-Agent: curl/7.64.1
 > Accept: */*
 >
 < HTTP/1.1 200 OK
-< Content-Type: text/html
+< Content-Type: text/plain
+< Content-Length: 13
 < Server: WEBrick/1.4.2 (Ruby/2.6.5/2019-10-01)
-< Date: Wed, 05 Feb 2020 11:08:37 GMT
-< Content-Length: 33
+< Date: Sun, 08 Mar 2020 10:58:55 GMT
 < Connection: Keep-Alive
 <
+Hello, World
 * Connection #0 to host localhost left intact
-<html><body>success</body></html>⏎
+* Closing connection 0
 ```
 
 cURLのレスポンスについて見ていきましょう。まずは前半部分です。前半部分がHTTPリクエスト部分を表示しており、Webアプリケーションに送ったリクエストの詳細を確認することができます。
 
 ```
-*   Trying ::1...
-* TCP_NODELAY set
-* Connected to localhost (::1) port 8000 (#0)
 > GET / HTTP/1.1
 > Host: localhost:8000
-> User-Agent: curl/7.54.0
+> User-Agent: curl/7.64.1
 > Accept: */*
 ```
 
-`GET / HTTP/1.1`のうち`GET`がメソッドを表し、`/`がパスを表しています。Webアプリケーション側ではこのメソッドとパスの組み合わせで処理の内容を決定します。
-
-`Host`、`User-Agent`、`Accept`がリクエストに含まれているヘッダー情報です。ヘッダーは主に付加情報として使われ、例えば`User-Agent`はクライアントの種別を示しています。`Accept`はクライアントが認識可能なMIMEタイプを表わしており、今回はすべてのMIMEタイプを受け入れ可能としています。Webアプリケーションでは`Accept`の内容に応じて返すコンテンツの形式を決定します。
+`GET / HTTP/1.1`のうち`GET`がメソッドを表し、`/`がパスを表しています。Webアプリケーション側ではこのメソッドとパスの組み合わせで処理の内容を決定します。`Host`、`User-Agent`、`Accept`がリクエストに含まれているヘッダ情報です。
 
 次に後半部分を見てみましょう。こちらはHTTPレスポンス部分を表示しており、Webアプリケーションから返ってきたレスポンスの詳細を確認することができます。
 
 ```
 < HTTP/1.1 200 OK
-< Content-Type: text/html
+< Content-Type: text/plain
+< Content-Length: 13
 < Server: WEBrick/1.4.2 (Ruby/2.6.5/2019-10-01)
-< Date: Wed, 05 Feb 2020 11:08:37 GMT
-< Content-Length: 33
+< Date: Sun, 08 Mar 2020 10:58:55 GMT
 < Connection: Keep-Alive
 <
-* Connection #0 to host localhost left intact
-<html><body>success</body></html>
+Hello, World
 ```
 
 最初の行の`200`の3桁の数字がステータスコードです。Webアプリケーションが正常に処理することができたのか、失敗したのかなどを示します。
 
-その下に続く`Content-Type`から`Connection`までがヘッダー情報です。リクエスト時のヘッダーとレスポンス時のヘッダーを分けて表現するために「リクエストヘッダー」「レスポンスヘッダー」と呼ぶことが多いです。`Content-Type`はレスポンスに含まれているボディのコンテンツ種別を示します。今回の例ではコンテンツがHTML形式であることを示しています。
+その下に続く`Content-Type`から`Connection`までがヘッダ情報です。リクエスト時のヘッダとレスポンス時のヘッダを分けて表現するために「リクエストヘッダ」「レスポンスヘッダ」と呼ぶことが多いです。`Content-Type`はレスポンスに含まれているボディのコンテンツ種別を示します。今回の例ではコンテンツがHTML形式であることを示しています。
 
 最後の一行がボディで、Webアプリケーションから返ってきたコンテンツの中身などが格納されています。
 
-## HTTPの各要素について
+### GETリクエストの送信(404)
 
-リクエストとレスポンスの中身を実際に見てみたところで、構成している要素について一度整理してみましょう。
+サーバには`/`以外のパスにリクエストがあった場合、404が返るように実装されています。404はリクエストしたリソースが存在しないことを示すステータスコードです。試しに`/hello`にGETリクエストを送ってみましょう。
 
-### メソッドとパス
+```
+$ curl -v http://localhost:9292/hello
+*   Trying ::1...
+* TCP_NODELAY set
+* Connected to localhost (::1) port 9292 (#0)
+> GET /hello HTTP/1.1
+> Host: localhost:9292
+> User-Agent: curl/7.64.1
+> Accept: */*
+>
+< HTTP/1.1 404 Not Found
+< Content-Type: text/plain
+< Content-Length: 25
+< Server: WEBrick/1.4.2 (Ruby/2.6.5/2019-10-01)
+< Date: Sun, 08 Mar 2020 12:49:01 GMT
+< Connection: Keep-Alive
+<
+This page does not exist
+* Connection #0 to host localhost left intact
+* Closing connection 0
+```
 
-- HTTPメソッド = Webアプリケーションになにをして欲しいのか
-- パス = 欲しい情報
+## POSTメソッドに対応する
 
-以下が主要なHTTPメソッドの一覧です。
+POSTメソッドは主にリソースの作成に使われるHTTPメソッドです。ブラウザのフォームも通常POSTメソッドでリクエストを送っています。
 
-| メソッド | 内容 |
-| --- | --- |
-| GET | 情報の取得 |
-| POST | 情報の作成 |
-| PUT | 情報の一括更新 |
-| PATCH | 情報の部分更新 |
-| DELETE | 情報の削除 |
+今のサーバの実装はGETのみにしか対応していないので、POSTメソッドでリクエストがあった時に「Resource was successfully created.」と応答するようにしましょう(実際になにかリソースを作成する必要はありません)。またステータスコードはリソースが作成されたことを示す201にします。
 
-例えば `GET /users`であればユーザー一覧の取得、`DELETE /users/1` であれば ID=1のユーザーの削除 と判断することができます。
+修正するファイルは`./http/examples/01/app.rb` です。修正後はすでに起動済みのサーバプロセスを一度終了し、再起動する必要があります。またリクエストで指定されたHTTPメソッドは`request.request_method`で取得可能です。
 
-[HTTP リクエストメソッド \- HTTP \| MDN](https://developer.mozilla.org/ja/docs/Web/HTTP/Methods) なども参考にしてください。
+`curl`では以下の様にPOSTリクエストを送ることができます。`-d`オプションはPOSTかつ、`x-www-form-urlencoded`形式でボディを送信するオプションです。
 
-補足:  ブラウザのフォームではGET/POST以外送信できません。Railsではボディにメソッド情報を含めることで解決しています。
+```
+$ curl -v -d foo=bar http://localhost:9292
+*   Trying ::1...
+* TCP_NODELAY set
+* Connected to localhost (::1) port 9292 (#0)
+> POST / HTTP/1.1 # <-- POST形式になっている
+> Host: localhost:9292
+> User-Agent: curl/7.64.1
+> Accept: */*
+> Content-Length: 7
+> Content-Type: application/x-www-form-urlencoded
+>
+* upload completely sent off: 7 out of 7 bytes
+< HTTP/1.1 201 Created # <-- ステータスコードが201になっている
+< Content-Type: text/plain
+< Content-Length: 35
+< Server: WEBrick/1.4.2 (Ruby/2.6.5/2019-10-01)
+< Date: Sun, 08 Mar 2020 13:23:17 GMT
+< Connection: Keep-Alive
+<
+Resource was successfully created. # <-- ボディが変わっている
+* Connection #0 to host localhost left intact
+* Closing connection 0
+```
 
-### ヘッダー
+実装例は`./http/examples/02` にあります。
 
-HTTPリクエスト及びレスポンスの両方にヘッダー情報を含めることができます。付加情報をヘッダー情報に含めることでサーバー・クライアントそれぞれがリクエスト・レスポンスの解釈の手助けができます。
 
-ヘッダーの数はかなり多いため [HTTP ヘッダー \- HTTP \| MDN](https://developer.mozilla.org/ja/docs/Web/HTTP/Headers) などを参照してください。
+## Acceptヘッダに対応する。
 
-### ボディ
+Acceptヘッダはクライアントが理解できるコンテンツ形式を指定するためのヘッダです。サーバでは送られてきたAcceptヘッダを解釈し、レスポンスに含めるコンテンツの形式を決定します(= コンテンツネゴシエーション)。
 
-HTTPリクエスト及びレスポンスの両方にボディを含めることができます。リクエストではフォームの送信などを行なった際にフォームの情報がボディに格納されて送信されます。先程の例の用にフォーム以外でもAPI通信でWebアプリケーションに送りたい情報を含める用途に使われます。
+今のサーバの実装ではAcceptヘッダの内容に関係なく`text/plain`形式でコンテンツが返ってくるようになっているので、`text/html`形式に対応しましょう。本来のAcceptヘッダは複数の形式を指定できますが、ここでは単純に1つのみ指定することとします。 またリクエストで指定されたAcceptヘッダは`request.get_header("HTTP_ACCEPT")`で取得可能です。
 
-レスポンスの場合はWebアプリケーションから返す情報の格納に使われます。一番多く使われているのはやはりHTMLでしょう。API通信でもJSON文字列などがボディに格納されて送られてきます。
+`curl`ではヘッダを指定するのに`-H`オプションを使用することができます。
 
-### ステータスコード
-
-HTTPリクエストがどの様に処理されたのかを示す3桁の数字がHTTPレスポンスに含まれて返ってきます。数は多いですが、以下の4種類に大別されます。
-
-| ステータスコード | 内容 |
-| --- | --- |
-| 200系 | 処理の成功 |
-| 300系 | 情報の移転の通知(例: リダイレクト) |
-| 400系 | クライアント側の不備による失敗 |
-| 500系 | Webアプリケーション側の不備による失敗 |
-
-個別に見ていくと数が多いので [HTTP レスポンスステータスコード \- HTTP \| MDN](https://developer.mozilla.org/ja/docs/Web/HTTP/Status) などを参照してください。
+```
+$ curl -v -H "Accept: text/html" http://localhost:9292
+*   Trying ::1...
+* TCP_NODELAY set
+* Connected to localhost (::1) port 9292 (#0)
+> GET / HTTP/1.1
+> Host: localhost:9292
+> User-Agent: curl/7.64.1
+> Accept: text/html # <-- 送信されてるAcceptヘッダが変わっている
+>
+< HTTP/1.1 200 OK
+< Content-Type: text/html # <-- レスポンスのContent-Typeヘッダが変わっている
+< Content-Length: 39
+< Server: WEBrick/1.4.2 (Ruby/2.6.5/2019-10-01)
+< Date: Sun, 08 Mar 2020 14:12:33 GMT
+< Connection: Keep-Alive
+<
+<html><body>Hello, World</body></html> # <-- HTMLが返ってきている
+* Connection #0 to host localhost left intact
+* Closing connection 0
+```
